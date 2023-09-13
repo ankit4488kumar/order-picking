@@ -1,7 +1,26 @@
 import random
 import simpy
 
+
+#REQUIRED TAKS WITH TIME TAKEN
 ORDER_PROCESSING_TIME = 15
+LOCATE_PRODUCT_TIME = 2   # Locate products using technology
+RETRIEVE_ORDERS_TIME = 5  # Retrieve orders according to quantity, size etc. ensuring accuracy
+BUILD_PALLETS_TIME = 5 # Build pallets with orders and position them to loading docks
+WRAP_ORDERS_TIME = 10
+
+
+#OPTIONAL TASKS
+'''
+1. Re-stock inventory manually or with warehouse equipment
+2. Keep records of completed orders
+3. Maintain equipment and report on malfunctions
+'''
+
+
+START_HOURS = 0
+SHIFT_HOURS = 8
+
 
 def pick(env, queue, ident):
     while True:
