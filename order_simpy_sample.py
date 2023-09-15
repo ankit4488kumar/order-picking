@@ -3,13 +3,16 @@ import simpy
 
 
 
-RANDOM_SEED =  42
-NUMBER_OF_PICKER = 2
-MIN_PICKING_TIME = 20
-MAX_PICKING_TIME = 30
-MIN_LOCATE_PRODUCT_TIME = 5   # Locate products using technology
-MAX_LOCATE_PRODUCT_TIME = 10   # Locate products using technology
-SIM_TIME = 60     # Simulation time in minutes
+RANDOM_SEED =  40        
+NUMBER_OF_PICKER = 2           # number of picker in the warehouse
+MIN_LOCATE_PRODUCT_TIME = 5    # min time taken in locating products using technology
+MAX_LOCATE_PRODUCT_TIME = 10   # max time taken in locating products using technology
+MIN_RETRIVE_ORDER_TIME = 10    # min time taken in retriving the order in terms of quantity, size, volume etc.
+MAX_RETRIVE_ORDER_TIME = 20    # max time taken in retriving the order in terms of quantity, size, volume etc.
+MIN_PICKING_TIME = 20          # min time taken in picking
+MAX_PICKING_TIME = 30          # max time taken in picking
+
+SIM_TIME = 60                  # Simulation time in minutes
 #T_INTER = 7       # Create a car every ~7 minutes
 
 
@@ -22,17 +25,22 @@ try:
             self.picking_time = picking_time
             self.product_locate_time = product_locate_time
 
-        def order_locating(self,order):
+        def order_locating(self, env, order):
             """The order is trying to locating in warehouse using technology. It takes a ``order`` processes and tries
             to locate the place where it is present."""
             yield self.env.timeout(random.randint(MIN_LOCATE_PRODUCT_TIME, MAX_LOCATE_PRODUCT_TIME))
-            print("order {} has been located.".format(order))
+            print("{0} has been located at {1}.".format(order,env.now))
 
-        def picking(self, order):
+        def retrive_order(self,env, order):
+            """The order is trying to retrive the ``order`` according to quantity, size etc."""
+            yield self.env.timeout(random.randint(MIN_RETRIVE_ORDER_TIME, MAX_RETRIVE_ORDER_TIME))
+            print("order {0} has been retrived at {1}".format(order, env.now))
+
+        def picking(self, env, order):
             """The picking processes. It takes a ``order`` processes and tries
             to pick it."""
             yield self.env.timeout(random.randint(MIN_PICKING_TIME, MAX_PICKING_TIME))
-            print("Picked order {} for put away.".format(order))
+            print("Picked {0} for put away at {1}.".format(order, env.now))
             
 
     def order(env, name, op):
@@ -43,16 +51,22 @@ try:
         leaves to put away ...
 
         """
-        print('%s arrives at the warehouse at %.2f.' % (name, env.now))
+        if int(name.split(" ")[1]) < NUMBER_OF_PICKER:
+            print('%s ready for picking by pickers at %.2f.' % (name, env.now))
+        else:
+            print('%s is waiting for picker at %.2f.' % (name, env.now))
         with op.picker.request() as request:
             yield request
 
-            print('%s pick the order at %.2f.' % (name, env.now))
-            yield env.process(op.order_locating(name))
+            print('%s is going to search the location at %.2f.' % (name, env.now))
+            yield env.process(op.order_locating(env, name))
+
+            print('%s is going for order retriving at %.2f.' % (name, env.now))
+            yield env.process(op.retrive_order(env, name))
 
 
             print('%s going for picking %.2f.' % (name, env.now))
-            yield env.process(op.picking(name))
+            yield env.process(op.picking(env, name))
 
             print('%s ready to put away from warehouse at %.2f.' % (name, env.now))
 
@@ -60,19 +74,20 @@ try:
     def setup(env, num_picker, product_locate_time, picking_time):
         """Create a warehouse, a number of initial orders and keep creating orders
         approx. every ``t_inter`` minutes."""
+
         # Create the warehouse
         order_pick = OrderPick(env, num_picker, product_locate_time, picking_time)
 
         # Create 4 initial orders
-        for i in range(4):
+        for i in range(NUMBER_OF_PICKER):
             env.process(order(env, 'order %d' % i, order_pick))
         
         while True:
-            #yield env.timeout(random.randint(t_inter-2, t_inter+2))
-            yield env.timeout(random.randint(1,2))
+            #yield env.timeout(random.randint(1,2))
+            yield env.timeout(5)
+            #yield env.put(i)
             i += 1
             env.process(order(env, 'order %d' % i, order_pick))
-            #i += 1
 
         # # Create more orders while the simulation is running
         # while True:
@@ -83,7 +98,7 @@ try:
 
 
     # Setup and start the simulation
-    print('Order Picking')
+    print('Order Picking of Geodis Warehouse started....')
 
     random.seed(RANDOM_SEED)  # This helps reproducing the results
 
