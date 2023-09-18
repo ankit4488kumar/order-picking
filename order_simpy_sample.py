@@ -12,8 +12,8 @@ MAX_RETRIVE_ORDER_TIME = 20    # max time taken in retriving the order in terms 
 MIN_PICKING_TIME = 20          # min time taken in picking
 MAX_PICKING_TIME = 30          # max time taken in picking
 
-SIM_TIME = 60                  # Simulation time in minutes
-#T_INTER = 7       # Create a car every ~7 minutes
+SIM_TIME = 120                 # Simulation time in minutes
+#T_INTER = 7                   # Create a car every ~7 minutes
 
 
 try:
@@ -84,7 +84,7 @@ try:
         
         while True:
             #yield env.timeout(random.randint(1,2))
-            yield env.timeout(5)
+            yield env.timeout(15)
             #yield env.put(i)
             i += 1
             env.process(order(env, 'order %d' % i, order_pick))
